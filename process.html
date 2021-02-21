@@ -56,25 +56,51 @@
 					delete c_country[Object.keys(c_country)[0]];
 				}
 				
-				//ranking first month
-				var dec = JSON.parse(JSON.stringify(all_countries));
-				dec.sort( compare_desc );
-				
-				function compare_desc( a, b ) {
-					a = Object.values(a.monthly[11])[0].confirmed;
-					b = Object.values(b.monthly[11])[0].confirmed;
-				  if ( a > b ){
-					return -1;
-				  }
-				  if ( a < b ){
-					return 1;
-				  }
-				  return 0;
+				//ranking month
+				var ranking_month = [];
+				for(var i = 0; i < 12; i++){
+					var c_compare_desc = function(a, b){
+						a = Object.values(a.monthly[i])[0].confirmed;
+						b = Object.values(b.monthly[i])[0].confirmed;
+						if ( a > b ){return -1;}
+						if ( a < b ){return 1;}
+						return 0;
+					};
+					var c_month = JSON.parse(JSON.stringify(all_countries));
+					c_month.sort(c_compare_desc);
+					
+					//clean up
+					for(var j = 0; j < c_month.length; j++){
+						c_month[j].confirmed = Object.values(c_month[j].monthly[i])[0].confirmed;
+						delete c_month[j]['monthly'];
+					}
+					
+					ranking_month.push(c_month);
 				}
 				
-				console.log(dec);
+				console.log(ranking_month);
+				
+				//set ranking for each month per country
+				for(var i = 0; i < all_countries.length; i++){
+					var c_country = all_countries[i];
+					delete c_country['monthly'];
+					c_country.ranking = [];
+					for(var j = 0; j < 12; j++){
+						var confirmed = ranking_month[j].filter(function(item){
+							return item.code == c_country.code;
+						})[0].confirmed;
+						var ranking = ranking_month[j].findIndex(i => i.code === c_country.code);
+						c_country.ranking.push(
+							{
+								confirmed : confirmed,
+								ranking : ranking
+							}
+						);
+					}
+				}
 				
 				console.log(all_countries);
+				print(all_countries);
 			}
 
 			function print(j){
