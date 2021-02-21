@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Process</title>
+</head>
+<body>
+	<p id="data"></p>
+	<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+	<script>
+		//https://documenter.getpostman.com/view/2568274/SzS8rjbe?version=latest
+		$(function(){
+			var all_countries, code_map;
+			get_countries();
+
+			
+			function get_countries(){
+				$.get(
+					 "data/all_countries_raw.json", 
+					 function(data){
+						 all_countries = data;
+						 //console.log(all_countries);
+						get_code_map();
+					 }
+				 );
+			}
+			
+			function get_code_map(){
+				$.getJSON(
+					 "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/slim-3/slim-3.json", 
+					 function(data){
+						code_map = data;
+						//console.log(code_map);
+						process();
+					 }
+				 );
+			}
+			
+			function process(){
+				//set name
+				for(var i = 0; i < all_countries.length; i++){
+					var c_country = all_countries[i];
+					var name = code_map.filter(function(item) {
+						return item['alpha-3'] == c_country.code;
+					});
+					c_country.name = name.length ? name[0].name : null;
+				}
+				
+				//remove without name				
+				all_countries = all_countries.filter(function(item) {
+					return item.name;
+				});
+				
+				//remove default key
+				for(var i = 0; i < all_countries.length; i++){
+					var c_country = all_countries[i];
+					delete c_country[Object.keys(c_country)[0]];
+				}
+				
+				//ranking first month
+				var dec = JSON.parse(JSON.stringify(all_countries));
+				dec.sort( compare_desc );
+				
+				function compare_desc( a, b ) {
+					a = Object.values(a.monthly[11])[0].confirmed;
+					b = Object.values(b.monthly[11])[0].confirmed;
+				  if ( a > b ){
+					return -1;
+				  }
+				  if ( a < b ){
+					return 1;
+				  }
+				  return 0;
+				}
+				
+				console.log(dec);
+				
+				console.log(all_countries);
+			}
+
+			function print(j){
+				$('#data').html(JSON.stringify(j));
+			}
+
+		});
+	</script>
+
+</body>
+</html>
