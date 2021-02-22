@@ -4,7 +4,8 @@
 	<title>Covid19 Country Ranking Transition</title>
 	<style>
 		body {
-			background-color: #333;
+			background-color: #000;
+			/*background: linear-gradient(-45deg, #064c61, #000000);*/
 			background-repeat: no-repeat;
 			background-size: cover;
 			position: relative;
@@ -65,6 +66,7 @@
 		<div class="content">
 			<p>
 				Description : Data visualization for Covid19 Country confirm-cases ranking transition for year 2020. 
+				Highlighting Asean conuntries for more presentable view.
 				The data is taken on 25th for each month.
 			</p>
 			<p>
@@ -100,7 +102,6 @@
 				this.padding = 10;
 				this.circle_radius = 3;
 				this.gap_between_month = 250;
-				this.line_width = 1;
 				this.canvas_w = this.margin_left + this.margin_right + this.country_name_width*data.length;
 				this.canvas_h = 
 					this.margin_top + 
@@ -112,26 +113,57 @@
 					this.margin_bottom
 				;
 				
+				this.max_confirmed_value = Math.log10(data[174].ranking[11].confirmed);
+				
+				this.asean_countries = [
+					79, 168, 151, 104, 133, 183, 27, 30, 24, 93
+				];
+				
+				this.month_name = [
+					'January',
+					'February',
+					'March',
+					'April',
+					'May',
+					'June',
+					'July',
+					'August',
+					'September',
+					'October',
+					'November',
+					'December'
+				];
+				
 				this.set_country_color();
 				
 				this.set_canvas();
 				this.draw();
+				this.draw_month_name();
 			},
 			set_country_color : function(){
 				for(var i = 0; i < data.length; i++){
 					var c_data = data[i];
 					c_data.color = {
-						r : 200 - (200/data.length)*c_data.ranking[11].ranking,
-						g : (200/data.length)*c_data.ranking[11].ranking,
+						r : 70 - (70/data.length)*c_data.ranking[11].ranking,
+						g : (70/data.length)*c_data.ranking[11].ranking,
 						b : 0
 					};
+					c_data.line_width = 0.5;
+					
+					if(this.asean_countries.includes(i)){
+						c_data.color = {
+						r : 120 - (120/data.length)*c_data.ranking[11].ranking,
+						g : (120/data.length)*c_data.ranking[11].ranking,
+						b : 0
+					};
+						c_data.line_width = 5;
+					}
 					
 					c_data.color_code = "rgb("+c_data.color.r+","+c_data.color.g+","+c_data.color.b+")";
 					
 				}
 			},
 			set_canvas : function(){
-				
 				this.canvas = document.createElement('canvas');
 				document.body.appendChild(this.canvas);
 				this.canvas.width = this.canvas_w;
@@ -139,90 +171,117 @@
 				
 				this.ctx = this.canvas.getContext('2d');
 			},
-			draw : function(){
-				var max_confirmed_value = Math.log10(data[174].ranking[11].confirmed);
-				for(var i = 0; i < data.length; i++){
-					var c_data = data[i];
-					
-					//set color
-					this.ctx.fillStyle = c_data.color_code;
-					this.ctx.globalAlpha = 0.95;
-					
-					//graph
-					this.ctx.beginPath();
-					this.ctx.fillRect(
-						this.margin_left + this.country_name_width*c_data.ranking[11].ranking, 
-						this.margin_top + this.graph_height - (this.graph_height * Math.log10(c_data.ranking[11].confirmed)/max_confirmed_value), 
-						this.country_name_width - this.graph_gap, 
-						this.graph_height * Math.log10(c_data.ranking[11].confirmed)/max_confirmed_value
-					);
-					
-					//set name
+			draw_month_name : function(){
+				//set color
+				this.ctx.fillStyle = '#aaa';
+				this.ctx.globalAlpha = 1;
+				
+				for(var i = 0; i < 12; i++){
 					this.ctx.save();
 					this.ctx.translate(
-						this.margin_left + this.country_name_width*c_data.ranking[11].ranking + 5,
-						this.margin_top + this.graph_height + this.padding
+						this.margin_left - 5,
+						this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(i)
 					);
 					this.ctx.rotate(-Math.PI/2);
-					this.ctx.textAlign = "right";
-					this.ctx.font = "10px Arial";
+					this.ctx.textAlign = "left";
+					this.ctx.font = "15px Arial";
 					//this.ctx.fillStyle = c_data.color_code;
 					//this.ctx.globalAlpha = 1;
-					this.ctx.fillText(c_data.name, 0, 0);
+					this.ctx.fillText(this.month_name[11-i], 0, 0);
 					this.ctx.restore();
-					
-					// line below name
-					this.ctx.beginPath();
-					this.ctx.moveTo(
-						this.margin_left + this.country_name_width*c_data.ranking[11].ranking + (this.country_name_width - this.graph_gap)/2,
-						this.margin_top + this.graph_height + this.padding + this.ctx.measureText(c_data.name).width + 5
-					);
-					this.ctx.lineTo(
-						this.margin_left + this.country_name_width*c_data.ranking[11].ranking + (this.country_name_width - this.graph_gap)/2,
-						this.margin_top + this.graph_height + this.padding + this.name_height
-					);
-					this.ctx.strokeStyle = c_data.color_code;
-                	this.ctx.lineWidth = this.line_width;
-					this.ctx.stroke();
-					
-					//points for each months
-					for(var j = 11; j >= 0; j--){
-						if(this.country_name_width*c_data.ranking[j].confirmed){
-							//draw circle
-							this.ctx.beginPath();
-							this.ctx.arc(
-								this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
-								this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j), 
-								this.circle_radius, 
-								0, 
-								2 * Math.PI, 
-								false
-							);
-							this.ctx.fill();
-							
+				}
+			},
+			draw : function(){
+				for(var i = 0; i < data.length; i++){
+					this.draw_country(i);
+				}
+				
+				//asean
+				for(var i = 0; i < this.asean_countries.length; i++){
+					this.draw_country(this.asean_countries[i]);
+				}
+			},
+			draw_country : function(i){
+				var c_data = data[i];
+				
+				//set color
+				this.ctx.fillStyle = c_data.color_code;
+				this.ctx.globalAlpha = 1;
+
+				//graph
+				this.ctx.beginPath();
+				this.ctx.fillRect(
+					this.margin_left + this.country_name_width*c_data.ranking[11].ranking, 
+					this.margin_top + this.graph_height - (this.graph_height * Math.log10(c_data.ranking[11].confirmed)/this.max_confirmed_value), 
+					this.country_name_width - this.graph_gap, 
+					this.graph_height * Math.log10(c_data.ranking[11].confirmed)/this.max_confirmed_value
+				);
+
+				//set name
+				this.ctx.save();
+				this.ctx.translate(
+					this.margin_left + this.country_name_width*c_data.ranking[11].ranking + 5,
+					this.margin_top + this.graph_height + this.padding
+				);
+				this.ctx.rotate(-Math.PI/2);
+				this.ctx.textAlign = "right";
+				this.ctx.font = "10px Arial";
+				//this.ctx.fillStyle = c_data.color_code;
+				//this.ctx.globalAlpha = 1;
+				this.ctx.fillText(c_data.name, 0, 0);
+				this.ctx.restore();
+
+				// line below name
+				this.ctx.beginPath();
+				this.ctx.moveTo(
+					this.margin_left + this.country_name_width*c_data.ranking[11].ranking + (this.country_name_width - this.graph_gap)/2,
+					this.margin_top + this.graph_height + this.padding + this.ctx.measureText(c_data.name).width + 5
+				);
+				this.ctx.lineTo(
+					this.margin_left + this.country_name_width*c_data.ranking[11].ranking + (this.country_name_width - this.graph_gap)/2,
+					this.margin_top + this.graph_height + this.padding + this.name_height
+				);
+				this.ctx.strokeStyle = c_data.color_code;
+				this.ctx.lineWidth = c_data.line_width;
+				this.ctx.stroke();
+
+				//points for each months
+				for(var j = 11; j >= 0; j--){
+					if(this.country_name_width*c_data.ranking[j].confirmed){
+						//draw circle
+						this.ctx.beginPath();
+						this.ctx.arc(
+							this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
+							this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j), 
+							this.circle_radius, 
+							0, 
+							2 * Math.PI, 
+							false
+						);
+						this.ctx.fill();
+
+						//draw bezier
+						if(j != 0 && this.country_name_width*c_data.ranking[(j-1)].confirmed){
 							//draw bezier
-							if(j != 0 && this.country_name_width*c_data.ranking[(j-1)].confirmed){
-								//draw bezier
-								this.ctx.beginPath();
-								this.ctx.moveTo(
-									this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
-									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j)
+							this.ctx.beginPath();
+							this.ctx.moveTo(
+								this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
+								this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j)
+							);
+							this.ctx.bezierCurveTo(
+								this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
+								this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(12-j) - this.gap_between_month/2, 
+								this.margin_left + this.country_name_width*c_data.ranking[j-1].ranking + (this.country_name_width - this.graph_gap)/2, 
+								this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j) + this.gap_between_month/2,
+								this.margin_left + this.country_name_width*c_data.ranking[j-1].ranking + (this.country_name_width - this.graph_gap)/2, 
+								this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(12-j)
 								);
-								this.ctx.bezierCurveTo(
-									this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
-									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(12-j) - this.gap_between_month/2, 
-									this.margin_left + this.country_name_width*c_data.ranking[j-1].ranking + (this.country_name_width - this.graph_gap)/2, 
-									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j) + this.gap_between_month/2,
-									this.margin_left + this.country_name_width*c_data.ranking[j-1].ranking + (this.country_name_width - this.graph_gap)/2, 
-									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(12-j)
-									);
-								this.ctx.strokeStyle = c_data.color_code;
-								this.ctx.lineWidth = this.line_width;
-								this.ctx.stroke();
-							}
-							
-							
+							this.ctx.strokeStyle = c_data.color_code;
+							this.ctx.lineWidth = c_data.line_width;
+							this.ctx.stroke();
 						}
+
+
 					}
 				}
 			}
