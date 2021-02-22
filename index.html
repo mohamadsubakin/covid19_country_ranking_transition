@@ -4,7 +4,7 @@
 	<title>Covid19 Country Ranking Transition</title>
 	<style>
 		body {
-			background-color: #000;
+			background-color: #333;
 			background-repeat: no-repeat;
 			background-size: cover;
 			position: relative;
@@ -93,11 +93,24 @@
 				this.margin_left = 30;
 				this.margin_right = 30;
 				this.margin_top = 75;
+				this.margin_bottom = 100;
 				this.graph_height = 100;
 				this.graph_gap = 4;
+				this.name_height = 250;
 				this.padding = 10;
+				this.circle_radius = 3;
+				this.gap_between_month = 250;
+				this.line_width = 1;
 				this.canvas_w = this.margin_left + this.margin_right + this.country_name_width*data.length;
-				this.canvas_h = window.innerHeight;
+				this.canvas_h = 
+					this.margin_top + 
+					this.graph_height +
+					this.graph_gap +
+					this.padding +
+					this.name_height +
+					this.gap_between_month*11 + 
+					this.margin_bottom
+				;
 				
 				this.set_country_color();
 				
@@ -108,10 +121,11 @@
 				for(var i = 0; i < data.length; i++){
 					var c_data = data[i];
 					c_data.color = {
-						r : 255 - (255/data.length)*c_data.ranking[11].ranking,
-						g : (255/data.length)*c_data.ranking[11].ranking,
+						r : 200 - (200/data.length)*c_data.ranking[11].ranking,
+						g : (200/data.length)*c_data.ranking[11].ranking,
 						b : 0
 					};
+					
 					c_data.color_code = "rgb("+c_data.color.r+","+c_data.color.g+","+c_data.color.b+")";
 					
 				}
@@ -132,7 +146,7 @@
 					
 					//set color
 					this.ctx.fillStyle = c_data.color_code;
-					this.ctx.globalAlpha = 1;
+					this.ctx.globalAlpha = 0.95;
 					
 					//graph
 					this.ctx.beginPath();
@@ -156,6 +170,60 @@
 					//this.ctx.globalAlpha = 1;
 					this.ctx.fillText(c_data.name, 0, 0);
 					this.ctx.restore();
+					
+					// line below name
+					this.ctx.beginPath();
+					this.ctx.moveTo(
+						this.margin_left + this.country_name_width*c_data.ranking[11].ranking + (this.country_name_width - this.graph_gap)/2,
+						this.margin_top + this.graph_height + this.padding + this.ctx.measureText(c_data.name).width + 5
+					);
+					this.ctx.lineTo(
+						this.margin_left + this.country_name_width*c_data.ranking[11].ranking + (this.country_name_width - this.graph_gap)/2,
+						this.margin_top + this.graph_height + this.padding + this.name_height
+					);
+					this.ctx.strokeStyle = c_data.color_code;
+                	this.ctx.lineWidth = this.line_width;
+					this.ctx.stroke();
+					
+					//points for each months
+					for(var j = 11; j >= 0; j--){
+						if(this.country_name_width*c_data.ranking[j].confirmed){
+							//draw circle
+							this.ctx.beginPath();
+							this.ctx.arc(
+								this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
+								this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j), 
+								this.circle_radius, 
+								0, 
+								2 * Math.PI, 
+								false
+							);
+							this.ctx.fill();
+							
+							//draw bezier
+							if(j != 0 && this.country_name_width*c_data.ranking[(j-1)].confirmed){
+								//draw bezier
+								this.ctx.beginPath();
+								this.ctx.moveTo(
+									this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
+									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j)
+								);
+								this.ctx.bezierCurveTo(
+									this.margin_left + this.country_name_width*c_data.ranking[j].ranking + (this.country_name_width - this.graph_gap)/2, 
+									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(12-j) - this.gap_between_month/2, 
+									this.margin_left + this.country_name_width*c_data.ranking[j-1].ranking + (this.country_name_width - this.graph_gap)/2, 
+									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(11-j) + this.gap_between_month/2,
+									this.margin_left + this.country_name_width*c_data.ranking[j-1].ranking + (this.country_name_width - this.graph_gap)/2, 
+									this.margin_top + this.graph_height + this.padding + this.name_height + this.gap_between_month*(12-j)
+									);
+								this.ctx.strokeStyle = c_data.color_code;
+								this.ctx.lineWidth = this.line_width;
+								this.ctx.stroke();
+							}
+							
+							
+						}
+					}
 				}
 			}
 	    }
