@@ -10,7 +10,6 @@
 			position: relative;
 			margin: 0;
 			padding: 0;
-			overflow: hidden;
 		}
 		/*
 		INFO COLLAPSIBLE
@@ -84,22 +83,80 @@
 	</div>
 	<script src="data/data.js"></script>
 	<script>
+		//remove micronesia
+		data.splice(112, 1);
 		console.log(data);
 
 		var obj = {
 			init : function(){
-				this.init_canvas();
+				this.country_name_width = 10;
+				this.margin_left = 30;
+				this.margin_right = 30;
+				this.margin_top = 75;
+				this.graph_height = 100;
+				this.graph_gap = 4;
+				this.padding = 10;
+				this.canvas_w = this.margin_left + this.margin_right + this.country_name_width*data.length;
+				this.canvas_h = window.innerHeight;
+				
+				this.set_country_color();
+				
+				this.set_canvas();
+				this.draw();
 			},
-			init_canvas : function(){
-				this.h = window.innerHeight;
-				this.w = window.innerWidth;
+			set_country_color : function(){
+				for(var i = 0; i < data.length; i++){
+					var c_data = data[i];
+					c_data.color = {
+						r : 255 - (255/data.length)*c_data.ranking[11].ranking,
+						g : (255/data.length)*c_data.ranking[11].ranking,
+						b : 0
+					};
+					c_data.color_code = "rgb("+c_data.color.r+","+c_data.color.g+","+c_data.color.b+")";
+					
+				}
+			},
+			set_canvas : function(){
 				
 				this.canvas = document.createElement('canvas');
 				document.body.appendChild(this.canvas);
-				this.canvas.width = this.w;
-				this.canvas.height = this.h;
+				this.canvas.width = this.canvas_w;
+				this.canvas.height = this.canvas_h;
 				
 				this.ctx = this.canvas.getContext('2d');
+			},
+			draw : function(){
+				var max_confirmed_value = Math.log10(data[174].ranking[11].confirmed);
+				for(var i = 0; i < data.length; i++){
+					var c_data = data[i];
+					
+					//set color
+					this.ctx.fillStyle = c_data.color_code;
+					this.ctx.globalAlpha = 1;
+					
+					//graph
+					this.ctx.beginPath();
+					this.ctx.fillRect(
+						this.margin_left + this.country_name_width*c_data.ranking[11].ranking, 
+						this.margin_top + this.graph_height - (this.graph_height * Math.log10(c_data.ranking[11].confirmed)/max_confirmed_value), 
+						this.country_name_width - this.graph_gap, 
+						this.graph_height * Math.log10(c_data.ranking[11].confirmed)/max_confirmed_value
+					);
+					
+					//set name
+					this.ctx.save();
+					this.ctx.translate(
+						this.margin_left + this.country_name_width*c_data.ranking[11].ranking + 5,
+						this.margin_top + this.graph_height + this.padding
+					);
+					this.ctx.rotate(-Math.PI/2);
+					this.ctx.textAlign = "right";
+					this.ctx.font = "10px Arial";
+					//this.ctx.fillStyle = c_data.color_code;
+					//this.ctx.globalAlpha = 1;
+					this.ctx.fillText(c_data.name, 0, 0);
+					this.ctx.restore();
+				}
 			}
 	    }
 
